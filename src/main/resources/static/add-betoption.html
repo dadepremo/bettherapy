@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Create Bet Options</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <style>
+      body {
+        font-family: "Segoe UI", sans-serif;
+        background: #0d0224;
+        color: white;
+        padding: 30px;
+      }
+
+      h1 {
+        text-align: center;
+        margin-bottom: 1rem;
+        font-size: 1.8rem;
+        color: #ffd700;
+      }
+
+      .form-card {
+        background: #25143c;
+        padding: 25px;
+        border-radius: 14px;
+        max-width: 800px;
+        margin: auto;
+        box-shadow: 0 0 20px rgba(0, 0, 0, 0.4);
+      }
+
+      label {
+        display: block;
+        margin-top: 15px;
+        margin-bottom: 5px;
+        font-weight: bold;
+      }
+
+      select,
+      input {
+        width: 100%;
+        padding: 10px;
+        background: #392552;
+        border: none;
+        color: white;
+        border-radius: 6px;
+      }
+
+      input::placeholder {
+        color: #ccc;
+      }
+
+      .option-row {
+        display: flex;
+        gap: 10px;
+        margin-top: 10px;
+        align-items: center;
+      }
+
+      .option-row input {
+        flex: 1;
+      }
+
+      .results {
+        margin-top: 20px;
+        padding: 10px;
+        background: #392552;
+        border-radius: 8px;
+      }
+
+      .results span {
+        display: block;
+        margin-top: 5px;
+        font-size: 0.95rem;
+      }
+
+      .error {
+        color: #ff6b6b;
+      }
+
+      button {
+        margin-top: 20px;
+        padding: 12px;
+        font-size: 1rem;
+        background-color: #4caf50;
+        border: none;
+        color: white;
+        border-radius: 8px;
+        cursor: pointer;
+      }
+
+      button:hover {
+        background-color: #3da242;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Create Bet Options</h1>
+
+    <div class="form-card">
+      <form id="betForm">
+        <label for="league">League</label>
+        <select id="league" required></select>
+
+        <label for="match">Match</label>
+        <select id="match" required disabled></select>
+
+        <div id="options">
+          <label>Bet Options</label>
+        </div>
+        <button type="button" id="addOption">➕ Add Option</button>
+
+        <div class="results" id="resultBox">
+          <span
+            ><strong>Total Probability:</strong>
+            <span id="totalProb">0%</span></span
+          >
+          <span
+            ><strong>Bookmaker Margin:</strong>
+            <span id="margin">0%</span></span
+          >
+          <span class="error" id="warning"></span>
+        </div>
+
+        <button type="submit">Save Bet Options</button>
+      </form>
+    </div>
+
+    <script>
+      const optionLabels = {
+        HOME_WIN: "Home Win",
+        DRAW: "Draw",
+        AWAY_WIN: "Away Win",
+        HOME_WIN_EXTRA_TIME: "Home Win (ET)",
+        AWAY_WIN_EXTRA_TIME: "Away Win (ET)",
+        HOME_WIN_PENALTIES: "Home Win (Pens)",
+        AWAY_WIN_PENALTIES: "Away Win (Pens)",
+        OVER_2_5: "Over 2.5 Goals",
+        UNDER_2_5: "Under 2.5 Goals",
+        BOTH_TEAMS_TO_SCORE_YES: "BTTS: Yes",
+        BOTH_TEAMS_TO_SCORE_NO: "BTTS: No",
+        DOUBLE_CHANCE_HOME_DRAW: "Double Chance: 1X",
+        DOUBLE_CHANCE_AWAY_DRAW: "Double Chance: X2",
+        DOUBLE_CHANCE_HOME_AWAY: "Double Chance: 12",
+        FIRST_HALF_HOME_WIN: "1st Half: Home Win",
+        FIRST_HALF_DRAW: "1st Half: Draw",
+        FIRST_HALF_AWAY_WIN: "1st Half: Away Win",
+      };
+
+      function createOptionRow(defaultResult = "") {
+        const div = document.createElement("div");
+        div.className = "option-row";
+
+        const select = document.createElement("select");
+        select.className = "label";
+        select.required = true;
+
+        const defaultOpt = document.createElement("option");
+        defaultOpt.value = "";
+        defaultOpt.textContent = "-- Select Bet Option --";
+        select.appendChild(defaultOpt);
+
+        for (const [value, label] of Object.entries(optionLabels)) {
+          const opt = document.createElement("option");
+          opt.value = value;
+          opt.textContent = label;
+          if (value === defaultResult) opt.selected = true;
+          select.appendChild(opt);
+        }
+
+        const input = document.createElement("input");
+        input.type = "number";
+        input.placeholder = "e.g. 2.30";
+        input.step = "0.01";
+        input.className = "odds";
+        input.style = "width: 200px"
+        input.required = true;
+        input.addEventListener("input", updateCalculations);
+
+        div.appendChild(select);
+        div.appendChild(input);
+        document.getElementById("options").appendChild(div);
+      }
+
+      document.getElementById("addOption").addEventListener("click", () => {
+        createOptionRow();
+      });
+
+      async function loadLeagues() {
+        const res = await fetch("/api/leagues");
+        const leagues = await res.json();
+        const leagueSelect = document.getElementById("league");
+
+        leagues.forEach((league, index) => {
+          const opt = document.createElement("option");
+          opt.value = league.id;
+          opt.textContent = `${league.name} - ${league.season}`;
+          leagueSelect.appendChild(opt);
+        });
+
+        if (leagues.length > 0) {
+          leagueSelect.value = leagues[0].id;
+          await loadMatchesByLeague(leagues[0].id);
+        }
+      }
+
+      async function loadMatchesByLeague(leagueId) {
+        const matchSelect = document.getElementById("match");
+        matchSelect.innerHTML = "";
+        matchSelect.disabled = true;
+
+        const res = await fetch(`/api/matches/byLeague/${leagueId}`);
+        if (!res.ok) return;
+
+        const matches = await res.json();
+        const scheduled = matches
+          .filter((m) => m.status === "SCHEDULED")
+          .sort((a, b) => (a.matchday || 0) - (b.matchday || 0));
+
+        const grouped = {};
+
+        scheduled.forEach((match) => {
+          const key = `Matchday ${match.matchday || "-"}`;
+          grouped[key] ??= [];
+          grouped[key].push(match);
+        });
+
+        Object.entries(grouped).forEach(([label, groupMatches]) => {
+          const group = document.createElement("optgroup");
+          group.label = label;
+
+          groupMatches.forEach((match) => {
+            const opt = document.createElement("option");
+            const kickoff = match.kickoff
+              ? new Date(match.kickoff).toLocaleString()
+              : "TBD";
+            opt.value = match.id;
+            opt.textContent = `${match.homeTeamName} vs ${match.awayTeamName} (${kickoff})`;
+            group.appendChild(opt);
+          });
+
+          matchSelect.appendChild(group);
+        });
+
+        matchSelect.disabled = false;
+
+        // Select first match by default if available
+        const firstOption = matchSelect.querySelector("optgroup option");
+        if (firstOption) matchSelect.value = firstOption.value;
+      }
+
+      function updateCalculations() {
+        const odds = document.querySelectorAll(".odds");
+        let total = 0;
+
+        odds.forEach((input) => {
+          const val = parseFloat(input.value);
+          if (!isNaN(val) && val > 0) total += 1 / val;
+        });
+
+        const prob = (total * 100).toFixed(2);
+        const margin = (prob - 100).toFixed(2);
+        document.getElementById("totalProb").textContent = `${prob}%`;
+        document.getElementById("margin").textContent = `${margin}%`;
+
+        document.getElementById("warning").textContent =
+          margin < 1 || margin > 20
+            ? "⚠️ Margin out of typical range (1–20%)"
+            : "";
+      }
+
+      document.getElementById("league").addEventListener("change", (e) => {
+        loadMatchesByLeague(e.target.value);
+      });
+
+      document
+        .getElementById("betForm")
+        .addEventListener("submit", async (e) => {
+          e.preventDefault();
+
+          const matchId = document.getElementById("match").value;
+          if (!matchId) return alert("Please select a match.");
+
+          const payload = [];
+          document.querySelectorAll(".option-row").forEach((row) => {
+            const select = row.querySelector(".label");
+            const input = row.querySelector(".odds");
+            const oddsVal = parseFloat(input.value);
+            if (!select.value || isNaN(oddsVal) || oddsVal <= 0) return;
+
+            payload.push({
+              matchId: parseInt(matchId),
+              odds: oddsVal,
+              result: select.value,
+              description: select.options[select.selectedIndex].textContent,
+            });
+          });
+
+          if (payload.length === 0)
+            return alert("Enter at least one valid bet option.");
+
+          const res = await fetch("/api/matches/bet-options", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+          });
+
+          if (res.ok) {
+            alert("✅ Bet options saved!");
+            location.reload();
+          } else {
+            alert("❌ Failed to save bet options.");
+          }
+        });
+
+      document.addEventListener("DOMContentLoaded", async () => {
+        await loadLeagues();
+        createOptionRow("HOME_WIN");
+        createOptionRow("DRAW");
+        createOptionRow("AWAY_WIN");
+      });
+    </script>
+  </body>
+</html>

@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Betting Dashboard</title>
+    <style>
+      body {
+        margin: 0;
+        font-family: "Segoe UI", sans-serif;
+        background-color: #0e0020;
+        color: #fff;
+      }
+
+      .navbar {
+        background: #22003a;
+        padding: 1rem 2rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .navbar h1 {
+        font-size: 1.5rem;
+      }
+
+      .container {
+        display: flex;
+        padding: 2rem;
+        gap: 2rem;
+        flex-wrap: wrap;
+      }
+
+      .section {
+        background-color: #1a0130;
+        padding: 1rem;
+        border-radius: 12px;
+        flex: 1 1 300px;
+        min-width: 300px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+      }
+
+      .section h2 {
+        font-size: 1.2rem;
+        margin-bottom: 1rem;
+        border-left: 4px solid #ff5470;
+        padding-left: 0.5rem;
+      }
+
+      .match,
+      .league,
+      .bet {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 0.75rem;
+      }
+
+      .match .teams {
+        flex: 1;
+      }
+
+      .match .odds {
+        display: flex;
+        gap: 0.5rem;
+      }
+
+      .odds button {
+        background: #4a90e2;
+        border: none;
+        color: white;
+        padding: 0.3rem 0.6rem;
+        border-radius: 6px;
+        cursor: pointer;
+      }
+
+      .bet-slip {
+        margin-top: 1rem;
+      }
+
+      .bet-slip .summary {
+        margin-top: 0.5rem;
+        text-align: right;
+      }
+
+      .bet-slip button {
+        background-color: #ff5470;
+        color: #fff;
+        border: none;
+        padding: 0.6rem 1rem;
+        margin-top: 0.5rem;
+        border-radius: 6px;
+        cursor: pointer;
+      }
+
+      .sports ul {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+      }
+
+      .sport-group {
+        margin-bottom: 1rem;
+      }
+
+      .sport-title {
+        font-weight: bold;
+        color: #ffd700;
+        margin-bottom: 0.3rem;
+      }
+
+      .league-list a {
+        color: #9ecbff;
+        text-decoration: none;
+        display: block;
+        margin-left: 1rem;
+        font-size: 0.95rem;
+        margin-bottom: 0.25rem;
+      }
+
+      a {
+        color: #9ecbff;
+        text-decoration: none;
+        display: block;
+        margin-left: 1rem;
+        font-size: 0.95rem;
+        margin-bottom: 0.25rem;
+      }
+
+      .league-list a:hover {
+        color: #fff;
+        text-decoration: underline;
+      }
+
+      a:hover {
+        color: #fff;
+        text-decoration: underline;
+      }
+
+      /* Bet Slip Popup */
+      .receipt-popup {
+        position: fixed;
+        right: 1.5rem;
+        bottom: 1.5rem;
+        width: 280px;
+        background: #fff;
+        color: #000;
+        font-family: "Courier New", Courier, monospace;
+        border: 2px dashed #222;
+        padding: 1rem;
+        border-radius: 8px;
+        box-shadow: 0 0 12px rgba(0, 0, 0, 0.5);
+        z-index: 1000;
+        display: none;
+        animation: slideIn 0.3s ease-out;
+      }
+
+      .receipt-popup.active {
+        display: block;
+      }
+
+      .receipt-popup h3 {
+        margin: 0 0 0.5rem;
+        text-align: center;
+        font-size: 1rem;
+        border-bottom: 1px dotted #333;
+        padding-bottom: 0.5rem;
+      }
+
+      .receipt-popup .bet-line {
+        display: flex;
+        justify-content: space-between;
+        margin: 0.25rem 0;
+      }
+
+      .receipt-popup .dotted {
+        border-top: 1px dotted #222;
+        margin: 0.5rem 0;
+      }
+
+      .receipt-popup .total {
+        font-weight: bold;
+        display: flex;
+        justify-content: space-between;
+      }
+
+      .receipt-popup .footer {
+        text-align: center;
+        font-size: 0.75rem;
+        margin-top: 1rem;
+        border-top: 1px dotted #333;
+        padding-top: 0.5rem;
+        color: #444;
+      }
+
+      @keyframes slideIn {
+        from {
+          transform: translateY(20px);
+          opacity: 0;
+        }
+        to {
+          transform: translateY(0);
+          opacity: 1;
+        }
+      }
+
+      @media (max-width: 768px) {
+        .container {
+          flex-direction: column;
+        }
+      }
+
+      .ticker-wrap {
+        width: 100%;
+        overflow: hidden;
+        background: #1a0130;
+        padding: 0.4rem 0;
+        border-bottom: 2px solid #ff5470;
+        position: relative;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+        z-index: 10;
+      }
+
+      .ticker {
+        display: inline-block;
+        white-space: nowrap;
+        padding-left: 100%;
+        animation: scroll 20s linear infinite;
+        font-weight: 600;
+        font-size: 0.95rem;
+        color: #fffacd;
+      }
+
+      @keyframes scroll {
+        0% {
+          transform: translateX(0%);
+        }
+        100% {
+          transform: translateX(-100%);
+        }
+      }
+      .navbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background-color: #1b1030;
+        color: white;
+        padding: 1rem 2rem;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
+      }
+
+      .navbar .right {
+        display: flex;
+        align-items: center;
+        gap: 1.5rem;
+      }
+
+      .navbar .nav-link {
+        text-decoration: none;
+        color: #4fc3f7;
+        font-size: 1.1rem;
+        font-weight: bold;
+        transition: color 0.2s;
+      }
+
+      .navbar .nav-link:hover {
+        color: #ffffff;
+        text-shadow: 0 0 6px rgba(255, 255, 255, 0.3);
+      }
+
+      .navbar .points {
+        font-size: 1.3rem;
+        font-weight: bold;
+        color: #81d4fa;
+      }
+
+      .logout-button {
+        background-color: #ff5470;
+        border: none;
+        color: white;
+        font-weight: bold;
+        padding: 0.5rem 1rem;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: background 0.2s;
+      }
+
+      .logout-button:hover {
+        background-color: #e03e5b;
+      }
+      /* Live & Trending match cards */
+.match {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  margin-bottom: 0.75rem;
+  background-color: #250044;
+  border-radius: 10px;
+  transition: background 0.2s ease;
+  border: 1px solid #3a005c;
+}
+
+.match:hover {
+  background-color: #2d0055;
+}
+
+.match .teams {
+  font-weight: 500;
+  color: #f0f0f0;
+  font-size: 1rem;
+  flex: 1;
+}
+
+.match .teams a {
+  color: #9ecbff;
+  font-weight: bold;
+  text-decoration: none;
+  font-size: 1.05rem;
+}
+
+.match .teams a:hover {
+  color: #ffffff;
+  text-shadow: 0 0 6px rgba(255, 255, 255, 0.2);
+}
+
+.match .odds {
+  display: flex;
+  gap: 0.4rem;
+}
+
+.match .odds button {
+  background: #3498db;
+  border: none;
+  color: white;
+  padding: 0.4rem 0.8rem;
+  border-radius: 8px;
+  font-weight: bold;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.1s;
+}
+
+.match .odds button:hover {
+  background-color: #1d6fa5;
+  transform: scale(1.05);
+}
+
+    </style>
+  </head>
+  <body>
+    <div class="navbar">
+      <div class="left">
+        <h1 style="font-size: 40px; margin: 0">
+          BetTherapy
+          <span
+            id="username-display"
+            style="font-size: 20px; margin-left: 10px"
+          ></span>
+        </h1>
+      </div>
+      <div class="right">
+        <a href="/my-bets.html" class="nav-link">🎟️ My Bets</a>
+        <div id="points-display" class="points">€0.00</div>
+        <button id="logoutBtn" class="logout-button">Logout</button>
+      </div>
+    </div>
+
+    <div class="ticker-wrap">
+      <div class="ticker" id="newsTicker"></div>
+    </div>
+
+    <div class="container">
+      <!-- Live Matches -->
+      <div class="section">
+        <h2>🔥 Live & Trending</h2>
+        <div id="liveTrendingContainer"></div>
+      </div>
+
+      <!-- Sports & Leagues -->
+      <div class="section sports">
+        <h2>🏆 Sports & Leagues</h2>
+        <div id="leagueList"></div>
+      </div>
+
+      <!-- Upcoming Matches -->
+      <div class="section">
+        <h2>📅 Upcoming</h2>
+        <div class="match">
+          <div class="teams">Man Utd vs Spurs</div>
+          <div class="odds">
+            <button>2.40</button>
+            <button>3.00</button>
+            <button>2.90</button>
+          </div>
+        </div>
+        <div class="match">
+          <div class="teams">Inter vs Milan</div>
+          <div class="odds">
+            <button>2.20</button>
+            <button>3.25</button>
+            <button>3.10</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <button
+      onclick="toggleReceipt()"
+      style="
+        position: fixed;
+        bottom: 1rem;
+        right: 1rem;
+        background: #ff5470;
+        color: white;
+        border: none;
+        padding: 0.6rem 1rem;
+        border-radius: 6px;
+        cursor: pointer;
+      "
+    >
+      🧾 View Receipt
+    </button>
+
+    <div class="receipt-popup" id="receiptPopup">
+      <h3>Bet Receipt</h3>
+      <div class="bet-line"><span>Arsenal to Win</span><span>2.20</span></div>
+      <div class="bet-line"><span>Over 2.5 Goals</span><span>1.75</span></div>
+      <div class="dotted"></div>
+      <div class="bet-line"><span>Stake</span><span>€10.00</span></div>
+      <div class="total"><span>Potential</span><span>€38.50</span></div>
+      <div class="footer">
+        BetTherapy<br />
+        Thank you for betting!
+      </div>
+    </div>
+
+    <script>
+      async function loadTrendingMatches() {
+        const container = document.getElementById("liveTrendingContainer");
+        container.innerHTML = "<p>Loading trending matches...</p>";
+
+        try {
+          const res = await fetch("http://localhost:8080/api/matches/trending");
+          const matchOptionsList = await res.json();
+
+          console.log(matchOptionsList);
+
+          if (!matchOptionsList.length) {
+            container.innerHTML = "<p>No trending matches found.</p>";
+            return;
+          }
+
+          container.innerHTML = ""; // Clear "Loading..." text
+
+          matchOptionsList.forEach((entry) => {
+            const match = entry.match;
+            const betOptions = entry.betOptions;
+
+            if (!betOptions || betOptions.length < 3) return;
+
+            const oddsButtons = betOptions
+              .slice(0, 3)
+              .map(
+                (option) =>
+                  `<button onclick="placeQuickBet(${match.id}, ${option.id}, ${
+                    option.odds
+                  })">${option.odds.toFixed(2)}</button>`
+              )
+              .join("");
+
+            const div = document.createElement("div");
+            div.className = "match";
+            div.innerHTML = `
+        <div class="teams"><a href="/match.html?id=${match.id}">${match.homeTeam.name} vs ${match.awayTeam.name}</a></div>
+        <div class="odds">${oddsButtons}</div>
+      `;
+
+            container.appendChild(div);
+          });
+        } catch (err) {
+          console.error("Error loading trending matches:", err);
+          container.innerHTML = "<p>Error loading matches.</p>";
+        }
+      }
+
+      loadTrendingMatches();
+    </script>
+
+    <script>
+      const user = JSON.parse(localStorage.getItem("user"));
+
+      document.getElementById("points-display").innerText = user.points + " DP";
+      document.getElementById("username-display").innerText =
+        " - " + user.username;
+
+      function logout() {
+        localStorage.removeItem("user");
+        window.location.href = "/login.html";
+      }
+
+      document.getElementById("logoutBtn").addEventListener("click", () => {
+        localStorage.removeItem("user");
+        window.location.href = "/login.html"; // Or your actual login route
+      });
+    </script>
+
+    <script>
+      function toggleReceipt() {
+        const popup = document.getElementById("receiptPopup");
+        popup.classList.toggle("active");
+      }
+    </script>
+
+    <script>
+      async function loadNews() {
+        try {
+          const res = await fetch("http://localhost:8080/api/news");
+          const newsList = await res.json();
+
+          const ticker = document.getElementById("newsTicker");
+          ticker.innerHTML = "";
+
+          newsList
+            .filter((news) => news.visible)
+            .forEach((news) => {
+              const span = document.createElement("span");
+              span.innerHTML = `${news.message} &nbsp;&nbsp;&nbsp;`;
+              ticker.appendChild(span);
+            });
+        } catch (err) {
+          console.error("Error loading news:", err);
+        }
+      }
+
+      loadNews();
+    </script>
+
+    <script>
+      const sportEmojis = {
+        Football: "⚽",
+        Basketball: "🏀",
+        Tennis: "🎾",
+        "American Football": "🏈",
+        Cricket: "🏏",
+        "Ice Hockey": "🏒",
+      };
+
+      async function loadLeagues() {
+        const res = await fetch("http://localhost:8080/api/leagues");
+        const leagues = await res.json();
+
+        const grouped = {};
+        leagues.forEach((l) => {
+          const sport = l.sportName || "Other";
+          if (!grouped[sport]) grouped[sport] = [];
+          grouped[sport].push(l);
+        });
+
+        const container = document.getElementById("leagueList");
+        container.innerHTML = "";
+
+        for (const [sport, leagues] of Object.entries(grouped)) {
+          const group = document.createElement("div");
+          group.className = "sport-group";
+
+          const title = document.createElement("div");
+          title.className = "sport-title";
+          title.textContent = `${sportEmojis[sport] || "🏟️"} ${sport}`;
+          group.appendChild(title);
+
+          const list = document.createElement("div");
+          list.className = "league-list";
+
+          leagues
+            .sort((a, b) => a.name.localeCompare(b.name))
+            .forEach((league) => {
+              const link = document.createElement("a");
+              link.href = league.cup
+                ? `/cup.html?id=${league.id}`
+                : `/league.html?id=${league.id}`;
+              link.textContent =
+                league.name +
+                " | " +
+                league.season +
+                " | " +
+                league.description;
+              list.appendChild(link);
+            });
+
+          group.appendChild(list);
+          container.appendChild(group);
+        }
+      }
+
+      loadLeagues();
+    </script>
+  </body>
+</html>

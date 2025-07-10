@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Edit Match</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #0f0122;
+      color: white;
+      display: flex;
+      justify-content: center;
+      padding: 40px 20px;
+    }
+
+    .form-card {
+      background: #25143c;
+      border-radius: 14px;
+      padding: 30px;
+      max-width: 720px;
+      width: 100%;
+      box-shadow: 0 0 18px rgba(0, 0, 0, 0.4);
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 30px;
+      font-size: 1.8rem;
+      color: #f1f1f1;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 6px;
+      font-weight: bold;
+      font-size: 0.95rem;
+    }
+
+    input,
+    select {
+      width: 100%;
+      padding: 10px;
+      font-size: 1rem;
+      border-radius: 6px;
+      border: none;
+      background-color: #392552;
+      color: white;
+    }
+
+    input::placeholder {
+      color: #b3b3b3;
+    }
+
+    .form-section {
+      margin-top: 30px;
+      border-top: 1px solid #3d2e5c;
+      padding-top: 20px;
+    }
+
+    .form-section h2 {
+      font-size: 1.2rem;
+      margin-bottom: 15px;
+      color: #9cc5ff;
+    }
+
+    button {
+      margin-top: 30px;
+      padding: 12px;
+      width: 100%;
+      font-size: 1rem;
+      font-weight: bold;
+      background-color: #4caf50;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #3da242;
+    }
+
+    @media (max-width: 600px) {
+      .form-card {
+        padding: 20px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="form-card">
+    <h1 id="formTitle">Add Match</h1>
+    <form id="matchForm">
+
+      <div class="form-group">
+        <label for="name">Match Name</label>
+        <input type="text" id="name" placeholder="e.g. Chelsea vs Arsenal" required />
+      </div>
+
+      <div class="form-group">
+        <label for="kickoff">Kickoff Time</label>
+        <input type="datetime-local" id="kickoff" required />
+      </div>
+
+      <div class="form-group">
+        <label for="venue">Venue</label>
+        <input type="text" id="venue" placeholder="Stadium or location" />
+      </div>
+
+      <div class="form-section">
+        <h2>Match Info</h2>
+
+        <div class="form-group">
+          <label for="league">League</label>
+          <select id="league" required></select>
+        </div>
+
+        <div class="form-group">
+          <label for="homeTeam">Home Team</label>
+          <select id="homeTeam" required></select>
+        </div>
+
+        <div class="form-group">
+          <label for="awayTeam">Away Team</label>
+          <select id="awayTeam" required></select>
+        </div>
+
+        <div class="form-group">
+          <label for="status">Match Status</label>
+          <select id="status">
+            <option>SCHEDULED</option>
+            <option>ONGOING</option>
+            <option>COMPLETED</option>
+            <option>CANCELLED</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="type">Match Type</label>
+          <select id="type">
+            <option value="">--</option>
+            <option>LEAGUE</option>
+            <option>GROUP_STAGE</option>
+            <option>KNOCKOUT</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-section">
+        <h2>Scores & Extras</h2>
+
+        <div class="form-group">
+          <label for="homeScore">Home Score</label>
+          <input type="number" id="homeScore" placeholder="e.g. 2" />
+        </div>
+
+        <div class="form-group">
+          <label for="awayScore">Away Score</label>
+          <input type="number" id="awayScore" placeholder="e.g. 1" />
+        </div>
+
+        <div class="form-group">
+          <label for="matchday">Matchday</label>
+          <input type="number" id="matchday" />
+        </div>
+
+        <div class="form-group">
+          <label for="groupName">Group Name</label>
+          <input type="text" id="groupName" placeholder="e.g. Group A" />
+        </div>
+
+        <div class="form-group">
+          <label for="stageLabel">Stage Label</label>
+          <input type="text" id="stageLabel" placeholder="e.g. Final" />
+        </div>
+
+        <div class="form-group">
+          <label for="roundOrder">Round Order</label>
+          <input type="number" id="roundOrder" />
+        </div>
+      </div>
+
+      <button type="submit">Save Match</button>
+    </form>
+  </div>
+
+  <script>
+    const matchId = new URLSearchParams(location.search).get("id");
+
+    function parseNumberOrNull(value) {
+      return value.trim() === "" ? null : Number(value);
+    }
+
+    async function loadDropdowns() {
+      try {
+        const [teamsRes, leaguesRes] = await Promise.all([
+          fetch("/api/teams"), fetch("/api/leagues")
+        ]);
+        const [teams, leagues] = await Promise.all([
+          teamsRes.json(), leaguesRes.json()
+        ]);
+
+        const teamOptions = teams.map(t => `<option value="${t.id}">${t.name}</option>`).join("");
+        document.getElementById("homeTeam").innerHTML = teamOptions;
+        document.getElementById("awayTeam").innerHTML = teamOptions;
+
+        const leagueOptions = leagues.map(l => `<option value="${l.id}">${l.name}</option>`).join("");
+        document.getElementById("league").innerHTML = leagueOptions;
+      } catch (error) {
+        alert("Failed to load dropdown data.");
+      }
+    }
+
+    async function loadMatch(id) {
+      const res = await fetch(`/api/matches/${id}`);
+      if (!res.ok) return alert("Match not found.");
+      const m = await res.json();
+
+      document.getElementById("formTitle").innerText = "Edit Match";
+      document.getElementById("name").value = m.name || "";
+      document.getElementById("kickoff").value = m.kickoff?.slice(0, 16);
+      document.getElementById("venue").value = m.venue || "";
+      document.getElementById("league").value = m.leagueId;
+      document.getElementById("homeTeam").value = m.homeTeamId;
+      document.getElementById("awayTeam").value = m.awayTeamId;
+      document.getElementById("status").value = m.status;
+      document.getElementById("type").value = m.matchType || "";
+      document.getElementById("homeScore").value = m.homeScore ?? "";
+      document.getElementById("awayScore").value = m.awayScore ?? "";
+      document.getElementById("matchday").value = m.matchday ?? "";
+      document.getElementById("groupName").value = m.groupName || "";
+      document.getElementById("stageLabel").value = m.stageLabel || "";
+      document.getElementById("roundOrder").value = m.roundOrder ?? "";
+    }
+
+    document.getElementById("matchForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      const match = {
+        name: document.getElementById("name").value,
+        kickoff: document.getElementById("kickoff").value,
+        venue: document.getElementById("venue").value,
+        leagueId: document.getElementById("league").value,
+        homeTeamId: document.getElementById("homeTeam").value,
+        awayTeamId: document.getElementById("awayTeam").value,
+        status: document.getElementById("status").value,
+        matchType: document.getElementById("type").value || null,
+        homeScore: parseNumberOrNull(document.getElementById("homeScore").value),
+        awayScore: parseNumberOrNull(document.getElementById("awayScore").value),
+        matchday: parseNumberOrNull(document.getElementById("matchday").value),
+        groupName: document.getElementById("groupName").value || null,
+        stageLabel: document.getElementById("stageLabel").value || null,
+        roundOrder: parseNumberOrNull(document.getElementById("roundOrder").value),
+      };
+
+      const url = matchId ? `/api/matches/${matchId}` : "/api/matches";
+      const method = matchId ? "PUT" : "POST";
+
+      const res = await fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(match)
+      });
+
+      if (res.ok) {
+        alert("✅ Match saved!");
+        location.href = `/match.html?id=${matchId || ''}`;
+      } else {
+        const errorText = await res.text();
+        alert("❌ Error saving match:\n" + errorText);
+      }
+    });
+
+    loadDropdowns().then(() => {
+      if (matchId) loadMatch(matchId);
+    });
+  </script>
+</body>
+</html>

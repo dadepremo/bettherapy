@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Add Player</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        background: #181028;
+        color: white;
+        display: flex;
+        justify-content: center;
+        align-items: flex-start;
+        padding: 40px 20px;
+        min-height: 100vh;
+      }
+
+      .form-container {
+        background: #2c204c;
+        padding: 30px;
+        border-radius: 12px;
+        max-width: 600px;
+        width: 100%;
+        box-shadow: 0 0 20px rgba(0, 0, 0, 0.4);
+      }
+
+      .form-container h1 {
+        text-align: center;
+        margin-bottom: 20px;
+      }
+
+      label {
+        display: block;
+        margin-top: 15px;
+        margin-bottom: 5px;
+        font-weight: bold;
+      }
+
+      input,
+      select {
+        width: 100%;
+        padding: 8px;
+        border: none;
+        border-radius: 5px;
+        font-size: 1rem;
+      }
+
+      button {
+        margin-top: 20px;
+        width: 100%;
+        padding: 10px;
+        font-size: 1rem;
+        font-weight: bold;
+        background-color: #4caf50;
+        border: none;
+        border-radius: 6px;
+        color: white;
+        cursor: pointer;
+      }
+
+      .success {
+        color: lightgreen;
+        text-align: center;
+        margin-top: 15px;
+      }
+
+      .error {
+        color: salmon;
+        text-align: center;
+        margin-top: 15px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="form-container">
+      <h1>Add Player</h1>
+      <form id="playerForm">
+        <label for="fullName">Full Name:</label>
+        <input type="text" id="fullName" name="fullName" required />
+
+        <label for="position">Position:</label>
+        <select id="position" name="position" required>
+          <option value="Goalkeeper">Goalkeeper</option>
+          <option value="Defender">Defender</option>
+          <option value="Midfielder">Midfielder</option>
+          <option value="Forward">Forward</option>
+        </select>
+
+        <label for="countryId">Nationality:</label>
+        <select id="countryId" name="countryId" required>
+          <option value="">Loading countries...</option>
+        </select>
+
+        <label for="jerseyNumber">Jersey Number:</label>
+        <input type="number" id="jerseyNumber" name="jerseyNumber" required />
+
+        <label for="dateOfBirth">Date of Birth:</label>
+        <input type="date" id="dateOfBirth" name="dateOfBirth" required />
+
+        <label for="height">Height (cm):</label>
+        <input type="number" id="height" name="height" step="0.1" required />
+
+        <label for="weight">Weight (kg):</label>
+        <input type="number" id="weight" name="weight" step="0.1" required />
+
+        <label for="imageUrl">Image URL:</label>
+        <input type="url" id="imageUrl" name="imageUrl" />
+
+        <label for="teamId">Team:</label>
+        <select id="teamId" name="teamId" required>
+          <option value="">Loading teams...</option>
+        </select>
+
+        <button type="submit">Add Player</button>
+        <div class="success" id="successMessage"></div>
+        <div class="error" id="errorMessage"></div>
+      </form>
+    </div>
+
+    <script>
+      async function loadCountries() {
+        try {
+          const res = await fetch("/api/countries/");
+          const countries = await res.json();
+          const select = document.getElementById("countryId");
+
+          select.innerHTML = '<option value="">Select a country</option>';
+
+          countries.forEach((c) => {
+            const option = document.createElement("option");
+            option.value = c.id;
+            option.textContent = c.name;
+            select.appendChild(option);
+          });
+        } catch (err) {
+          document.getElementById("countryId").innerHTML =
+            '<option value="">Failed to load countries</option>';
+          console.error("Error loading countries:", err);
+        }
+      }
+
+      async function loadTeams() {
+        try {
+          const res = await fetch("/api/teams");
+          const teams = await res.json();
+          const teamSelect = document.getElementById("teamId");
+          teamSelect.innerHTML = '<option value="">Select a team</option>';
+
+          teams.forEach((team) => {
+            const option = document.createElement("option");
+            option.value = team.id;
+            option.textContent = team.name;
+            teamSelect.appendChild(option);
+          });
+        } catch (err) {
+          document.getElementById("teamId").innerHTML =
+            '<option value="">Failed to load teams</option>';
+          console.error("Error loading teams:", err);
+        }
+      }
+
+      document
+        .getElementById("playerForm")
+        .addEventListener("submit", async (e) => {
+          e.preventDefault();
+          const form = e.target;
+
+          const playerData = {
+            fullName: form.fullName.value,
+            position: form.position.value,
+            jerseyNumber: parseInt(form.jerseyNumber.value),
+            dateOfBirth: form.dateOfBirth.value,
+            height: parseFloat(form.height.value),
+            weight: parseFloat(form.weight.value),
+            imageUrl: form.imageUrl.value || null,
+            teamId: parseInt(form.teamId.value),
+            countryId: parseInt(form.countryId.value),
+          };
+
+          try {
+            const res = await fetch("/api/players/save", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(playerData),
+            });
+
+            if (!res.ok) throw new Error("Failed to save player");
+
+            document.getElementById("successMessage").textContent =
+              "✅ Player added successfully!";
+            document.getElementById("errorMessage").textContent = "";
+            form.reset();
+          } catch (err) {
+            document.getElementById("errorMessage").textContent =
+              "❌ Error adding player.";
+            document.getElementById("successMessage").textContent = "";
+            console.error(err);
+          }
+        });
+
+      loadTeams();
+      loadCountries();
+    </script>
+  </body>
+</html>

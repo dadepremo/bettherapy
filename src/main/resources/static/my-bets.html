@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>My Bets</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        background: #0e0020;
+        color: white;
+        margin: 0;
+        padding: 2rem;
+      }
+
+      .navbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+      }
+
+      .btn-dashboard {
+        background-color: #ffa500;
+        border: none;
+        padding: 10px 16px;
+        border-radius: 8px;
+        font-weight: bold;
+        cursor: pointer;
+        color: #000;
+        font-size: 14px;
+      }
+
+      h1, h2 {
+        margin-bottom: 1rem;
+      }
+
+      .stats-card {
+        background-color: #1e1e2f;
+        border-radius: 12px;
+        padding: 15px;
+        margin-bottom: 25px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 20px;
+        font-size: 16px;
+        font-weight: bold;
+      }
+
+      .bet-card {
+        background-color: #1e1b2e;
+        border-radius: 12px;
+        padding: 16px 20px;
+        margin-bottom: 20px;
+        color: #fff;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+        transition: transform 0.2s ease;
+      }
+
+      .bet-card:hover {
+        transform: scale(1.01);
+      }
+
+      .card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 12px;
+      }
+
+      .status-badge {
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: bold;
+        text-transform: uppercase;
+      }
+
+      .status-badge.pending {
+        background-color: #ff9500;
+        color: #fff;
+      }
+
+      .status-badge.won {
+        background-color: #4caf50;
+        color: #fff;
+      }
+
+      .status-badge.lost {
+        background-color: #f44336;
+        color: #fff;
+      }
+
+      .card-content {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px 20px;
+      }
+
+      .info-block div {
+        margin-bottom: 6px;
+        font-size: 0.95rem;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="navbar">
+      <h1>🎟️ My Bets</h1>
+      <button onclick="location.href='dashboard.html'" class="btn-dashboard">
+        🏠 Dashboard
+      </button>
+    </div>
+
+    <div class="stats-card" id="stats"></div>
+
+    <h2>🕐 Pending Bets</h2>
+    <div id="pendingBets"></div>
+
+    <h2>📜 Bet History</h2>
+    <div id="betHistory"></div>
+
+    <script>
+      const userId = JSON.parse(localStorage.getItem("user"))?.id || 1;
+
+      async function loadBets() {
+        try {
+          const res = await fetch(`/api/bets/user/${userId}`);
+          const bets = await res.json();
+
+          if (!bets.length) {
+            document.getElementById("pendingBets").innerHTML = "<p>No bets placed yet.</p>";
+            return;
+          }
+
+          const pending = [];
+          const history = [];
+
+          let total = bets.length;
+          let wins = 0,
+            losses = 0;
+          let staked = 0,
+            earned = 0;
+
+          bets.forEach((bet) => {
+            if (!bet.match || !bet.optionDescription) return;
+
+            if (bet.status === "PENDING") pending.push(bet);
+            else history.push(bet);
+
+            staked += bet.stake;
+            if (bet.status === "WON") {
+              wins++;
+              earned += bet.payout ?? 0;
+            } else if (bet.status === "LOST") {
+              losses++;
+            }
+          });
+
+          const winRate = wins + losses > 0 ? ((wins / (wins + losses)) * 100).toFixed(1) : 0;
+
+          document.getElementById("stats").innerHTML = `
+            <div>Total Bets: ${total}</div>
+            <div>Wins: ${wins}</div>
+            <div>Losses: ${losses}</div>
+            <div>Win Rate: ${winRate}%</div>
+            <div>Total Staked: €${staked.toFixed(2)}</div>
+            <div>Total Earned: €${earned.toFixed(2)}</div>
+          `;
+
+          document.getElementById("pendingBets").innerHTML = pending.map(renderBetCard).join("");
+          document.getElementById("betHistory").innerHTML = history.map(renderBetCard).join("");
+        } catch (err) {
+          console.error(err);
+          document.getElementById("pendingBets").innerHTML = "❌ Failed to load bets.";
+        }
+      }
+
+      function renderBetCard(bet) {
+        const match = bet.match;
+        const score =
+          match.homeScore != null && match.awayScore != null
+            ? `${match.homeScore} - ${match.awayScore}`
+            : "Not played";
+
+        return `
+      <div class="bet-card">
+        <div class="card-header">
+          <h3>${match.name}</h3>
+          <span class="status-badge ${bet.status.toLowerCase()}">${bet.status}</span>
+        </div>
+        <div class="card-content">
+          <div class="info-block">
+            <div><strong>Odds:</strong> ${bet.odds}</div>
+            <div><strong>Stake:</strong> €${bet.stake.toFixed(2)}</div>
+            <div><strong>Potential:</strong> €${bet.potentialPayout?.toFixed(2) ?? "-"}</div>
+            <div><strong>Placed:</strong> ${new Date(bet.placedAt).toLocaleString()}</div>
+          </div>
+          <div class="info-block">
+            <div><strong>Option:</strong> ${bet.optionDescription}</div>
+            <div><strong>Match Score:</strong> ${score}</div>
+            <div><strong>Kickoff:</strong> ${new Date(match.kickoff).toLocaleString()}</div>
+            <div><strong>Venue:</strong> ${match.venue}</div>
+          </div>
+        </div>
+      </div>
+    `;
+      }
+
+      loadBets();
+    </script>
+  </body>
+</html>

@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Matchweek View</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Segoe+UI:wght@400;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        margin: 0;
+        font-family: "Segoe UI", sans-serif;
+        background-color: #15002b;
+        color: #f0f0f0;
+      }
+
+      .navbar {
+        background-color: #22003a;
+        padding: 1rem 2rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+      }
+
+      .navbar h1 {
+        font-size: 1.6rem;
+        font-weight: 600;
+        color: #ffffff;
+      }
+
+      .navbar button {
+        background: #ff5470;
+        color: white;
+        border: none;
+        padding: 0.5rem 1rem;
+        border-radius: 6px;
+        font-weight: bold;
+        cursor: pointer;
+      }
+
+      .navbar button:hover {
+        background: #ff3857;
+      }
+
+      .container {
+        max-width: 960px;
+        margin: 2rem auto;
+        padding: 1rem;
+      }
+
+      .matchday-header {
+        text-align: center;
+        margin-bottom: 2rem;
+      }
+
+      .matchday-header h2 {
+        font-size: 2rem;
+        font-weight: 700;
+      }
+
+      .matchday-header p {
+        font-size: 0.95rem;
+        color: #bbb;
+        margin-top: 0.25rem;
+      }
+
+      .day-section {
+        margin-bottom: 2rem;
+      }
+
+      .day-section h3 {
+        font-size: 1.25rem;
+        color: #ffffff;
+        margin-bottom: 0.75rem;
+        border-left: 4px solid #ff5470;
+        padding-left: 0.5rem;
+      }
+
+      .match {
+        display: grid;
+        grid-template-columns: auto 1fr auto 1fr auto;
+        align-items: center;
+        padding: 1rem;
+        background-color: #25043f;
+        border-radius: 10px;
+        margin-bottom: 0.75rem;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+        gap: 0.5rem;
+      }
+
+      .match img {
+        width: 44px;
+        height: 44px;
+        object-fit: contain;
+        background-color: #fff;
+        border-radius: 10px;
+        padding: 4px;
+      }
+
+      .match span,
+      .match strong {
+        font-size: 1rem;
+        color: #fff;
+        font-weight: 500;
+        text-align: center;
+      }
+
+      .match a {
+        color: #67a7ff;
+        text-decoration: none;
+      }
+
+      a {
+        color: #67a7ff;
+        text-decoration: none;
+      }
+
+      .match a:hover {
+        text-decoration: underline;
+      }
+
+      a:hover {
+        text-decoration: underline;
+      }
+
+      .nav-buttons {
+        display: flex;
+        justify-content: center;
+        gap: 1rem;
+        margin-top: 2rem;
+      }
+
+      .nav-buttons button {
+        padding: 0.6rem 1.2rem;
+        border-radius: 6px;
+        border: none;
+        background-color: #4a90e2;
+        color: white;
+        font-weight: bold;
+        font-size: 0.95rem;
+        cursor: pointer;
+      }
+
+      .nav-buttons button:hover:not(:disabled) {
+        background-color: #357acc;
+      }
+
+      .nav-buttons button:disabled {
+        background-color: #333;
+        cursor: not-allowed;
+      }
+
+      .floating-back {
+        position: fixed;
+        bottom: 1.5rem;
+        left: 1.5rem;
+        background-color: #ff5470;
+        color: white;
+        padding: 0.6rem 1rem;
+        border-radius: 8px;
+        font-weight: bold;
+        text-decoration: none;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+      }
+
+      #leaderboard {
+        margin-top: 3rem;
+      }
+
+      #leaderboard h2 {
+        text-align: center;
+        margin-bottom: 1rem;
+        color: #ff5470;
+      }
+
+      #standingsTable {
+        width: 100%;
+        border-collapse: collapse;
+        background-color: #22003a;
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+      }
+
+      #standingsTable th,
+      #standingsTable td {
+        padding: 0.75rem 1rem;
+        text-align: center;
+        color: #f0f0f0;
+      }
+
+      #standingsTable thead {
+        background-color: #33004d;
+      }
+
+      #standingsTable tbody tr:nth-child(even) {
+        background-color: #2c0044;
+      }
+
+      .top-zone {
+        border-left: 5px solid #1abc9c;
+      }
+
+      .danger-zone {
+        border-left: 5px solid #f1c40f;
+      }
+
+      .relegation-zone {
+        border-left: 5px solid #e74c3c;
+      }
+
+      .score-box {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        font-weight: bold;
+        min-width: 60px;
+        color: white;
+      }
+
+      .score-line {
+        font-size: 1.2rem;
+      }
+
+      .live-pill {
+        background-color: #ff4444;
+        font-size: 0.65rem;
+        padding: 2px 8px;
+        border-radius: 12px;
+        font-weight: bold;
+        animation: blink 1s infinite;
+      }
+
+      @keyframes blink {
+        0%,
+        100% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.4;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="navbar">
+      <h1 id="title-title">Matchweek Viewer</h1>
+      <button onclick="logout()">Logout</button>
+    </div>
+
+    <div class="container">
+      <div class="matchday-header">
+        <h2 id="matchdayTitle">Matchweek</h2>
+        <p id="matchdayRange"></p>
+      </div>
+
+      <div id="matchesContainer"></div>
+
+      <div class="nav-buttons">
+        <button onclick="prevMatchday()">← Previous</button>
+        <button onclick="nextMatchday()">Next →</button>
+      </div>
+
+      <div id="leaderboard">
+        <h2>League Standings</h2>
+        <table id="standingsTable">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Team</th>
+              <th>Pts</th>
+              <th>W</th>
+              <th>D</th>
+              <th>L</th>
+              <th>GD</th>
+              <th>GF</th>
+              <th>GA</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+
+    <a href="/dashboard.html" class="floating-back">← Home</a>
+
+    <script>
+      const user = JSON.parse(localStorage.getItem("user")) || {
+        username: "guest",
+      };
+      function logout() {
+        localStorage.removeItem("user");
+        window.location.href = "/login.html";
+      }
+
+      let groupedMatches = {};
+      let matchdayKeys = [];
+      let currentIndex = 0;
+
+      async function fetchAndRenderMatches() {
+        const leagueId = new URLSearchParams(window.location.search).get("id");
+
+        const [res, res1] = await Promise.all([
+          fetch(`http://localhost:8080/api/matches/byLeague/${leagueId}`),
+          fetch(`http://localhost:8080/api/leagues/${leagueId}`),
+        ]);
+
+        if (!res.ok || !res1.ok) return console.error("❌ Fetch failed");
+
+        const [matches, leagueData] = [await res.json(), await res1.json()];
+        document.getElementById("title-title").innerText = leagueData[0].name;
+
+        // ⛳️ Group matches by matchday or stageLabel
+        groupedMatches = {};
+        matches.forEach((match) => {
+          const key = match.stageLabel || match.matchday;
+          (groupedMatches[key] ||= []).push(match);
+        });
+
+        // 🗂 Extract keys in proper round order
+        matchdayKeys = Object.keys(groupedMatches).sort((a, b) => {
+          const aMatch = groupedMatches[a]?.[0];
+          const bMatch = groupedMatches[b]?.[0];
+          const aOrder = aMatch?.roundOrder ?? aMatch?.matchday ?? 0;
+          const bOrder = bMatch?.roundOrder ?? bMatch?.matchday ?? 0;
+          return aOrder - bOrder;
+        });
+
+        // ✅ Only render if data is ready
+        if (matchdayKeys.length > 0) {
+          currentIndex = 0;
+          renderMatchday();
+        } else {
+          document.getElementById("matchesContainer").innerHTML =
+            "<p>No matches to display.</p>";
+        }
+
+        renderLeaderboard(leagueId);
+      }
+
+      function renderMatchday() {
+        const container = document.getElementById("matchesContainer");
+        const title = document.getElementById("matchdayTitle");
+        const range = document.getElementById("matchdayRange");
+        container.innerHTML = "";
+
+        const day = matchdayKeys[currentIndex];
+        const games = groupedMatches[day];
+        title.textContent = day;
+        range.textContent = getDateRange(games);
+
+        renderMatchGroups(container, games);
+
+        document.querySelector(".nav-buttons button:first-child").disabled =
+          currentIndex === 0;
+        document.querySelector(".nav-buttons button:last-child").disabled =
+          currentIndex >= matchdayKeys.length - 1;
+      }
+
+      function renderMatchGroups(container, games) {
+        const groupedByDate = games.reduce((acc, match) => {
+          const dateKey = new Date(match.kickoff).toLocaleDateString("en-GB", {
+            weekday: "short",
+            day: "2-digit",
+            month: "short",
+          });
+          (acc[dateKey] ||= []).push(match);
+          return acc;
+        }, {});
+
+        for (const [dateLabel, matches] of Object.entries(groupedByDate)) {
+          const section = document.createElement("div");
+          section.className = "day-section";
+          section.innerHTML = `<h3>${dateLabel}</h3>`;
+
+          for (const match of matches) {
+            const row = document.createElement("a");
+            row.href = `/match.html?id=${match.id}`;
+            row.className = "match";
+            row.style.textDecoration = "none";
+            row.innerHTML = `
+  <img src="${match.homeTeamLogo}" alt="${match.homeTeamName}" />
+  <span><a href="/team.html?id=${
+    match.homeTeamId
+  }" onclick="event.stopPropagation()">${match.homeTeamName}</a></span>
+  <div class="score-box">
+    <div class="score-line">
+      ${
+        match.status === "COMPLETED" || match.status === "ONGOING"
+          ? `${match.homeScore ?? 0} - ${match.awayScore ?? 0}`
+          : match.status === "CANCELLED"
+          ? "CANCELLED"
+          : new Date(match.kickoff).toLocaleTimeString([], {
+              hour: "2-digit",
+              minute: "2-digit",
+            })
+      }
+    </div>
+    ${match.status === "ONGOING" ? '<div class="live-pill">LIVE</div>' : ""}
+  </div>
+  <span><a href="/team.html?id=${
+    match.awayTeamId
+  }" onclick="event.stopPropagation()">${match.awayTeamName}</a></span>
+  <img src="${match.awayTeamLogo}" alt="${match.awayTeamName}" />
+`;
+            section.appendChild(row);
+          }
+          container.appendChild(section);
+        }
+      }
+
+      function getDateRange(games) {
+        if (!games?.length) return "No matches";
+        const dates = games.map((m) => new Date(m.kickoff));
+        const [min, max] = [
+          new Date(Math.min(...dates)),
+          new Date(Math.max(...dates)),
+        ];
+        return `${min.toLocaleDateString("en-GB", {
+          day: "2-digit",
+          month: "short",
+        })} - ${max.toLocaleDateString("en-GB", {
+          day: "2-digit",
+          month: "short",
+        })}`;
+      }
+
+      function nextMatchday() {
+        if (currentIndex < matchdayKeys.length - 1) currentIndex++;
+        renderMatchday();
+      }
+
+      function prevMatchday() {
+        if (currentIndex > 0) currentIndex--;
+        renderMatchday();
+      }
+
+      async function renderLeaderboard(leagueId) {
+        const [standingsRes, teamsRes] = await Promise.all([
+          fetch(`http://localhost:8080/api/standings/byLeague/${leagueId}`),
+          fetch(`http://localhost:8080/api/teams/byLeague/${leagueId}`),
+        ]);
+
+        if (!standingsRes.ok || !teamsRes.ok) {
+          console.error("❌ Failed to fetch standings or teams");
+          return;
+        }
+
+        const [standingsRaw, allTeams] = await Promise.all([
+          standingsRes.json(),
+          teamsRes.json(),
+        ]);
+
+        // Map existing standings by team ID
+        const standingsMap = Object.fromEntries(
+          standingsRaw.map((s) => [s.team.id, s])
+        );
+
+        // Fill in default data for teams not in standings
+        const completeStandings = allTeams.map((team) => {
+          return (
+            standingsMap[team.id] || {
+              team,
+              points: 0,
+              wins: 0,
+              draws: 0,
+              losses: 0,
+              goalDifference: 0,
+              goalsFor: 0,
+              goalsAgainst: 0,
+            }
+          );
+        });
+
+        // Optional: sort by points > GD > GF
+        completeStandings.sort((a, b) => {
+          return (
+            b.points - a.points ||
+            b.goalDifference - a.goalDifference ||
+            b.goalsFor - a.goalsFor
+          );
+        });
+
+        const tbody = document.querySelector("#standingsTable tbody");
+        tbody.innerHTML = "";
+
+        completeStandings.forEach((teamStat, index) => {
+          const row = document.createElement("tr");
+          row.className =
+            index < 4
+              ? "top-zone"
+              : index === 4
+              ? "danger-zone"
+              : index >= completeStandings.length - 3
+              ? "relegation-zone"
+              : "";
+
+          row.innerHTML = `
+      <td>${index + 1}</td>
+      <td style="text-align: left;">
+        <a href="/team.html?id=${
+          teamStat.team.id
+        }" style="display: inline-flex; align-items: center; gap: 8px;">
+          <img src="${
+            teamStat.team.logoUrl
+          }" style="width: 40px; height: 40px; margin-right: 20px;" />
+          ${teamStat.team.name}
+        </a>
+      </td>
+      <td>${teamStat.points}</td>
+      <td>${teamStat.wins}</td>
+      <td>${teamStat.draws}</td>
+      <td>${teamStat.losses}</td>
+      <td>${teamStat.goalDifference}</td>
+      <td>${teamStat.goalsFor}</td>
+      <td>${teamStat.goalsAgainst}</td>
+    `;
+
+          tbody.appendChild(row);
+        });
+      }
+
+      fetchAndRenderMatches();
+    </script>
+  </body>
+</html>

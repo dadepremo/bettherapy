@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Add Team</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #181028;
+      color: white;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      padding: 40px 20px;
+      min-height: 100vh;
+    }
+
+    .form-container {
+      background: #2c204c;
+      padding: 30px;
+      border-radius: 12px;
+      max-width: 600px;
+      width: 100%;
+      box-shadow: 0 0 20px rgba(0, 0, 0, 0.4);
+    }
+
+    .form-container h1 {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    label {
+      display: block;
+      margin-top: 15px;
+      margin-bottom: 5px;
+      font-weight: bold;
+    }
+
+    input,
+    select {
+      width: 100%;
+      padding: 8px;
+      border: none;
+      border-radius: 5px;
+      font-size: 1rem;
+    }
+
+    button {
+      margin-top: 20px;
+      width: 100%;
+      padding: 10px;
+      font-size: 1rem;
+      font-weight: bold;
+      background-color: #4caf50;
+      border: none;
+      border-radius: 6px;
+      color: white;
+      cursor: pointer;
+    }
+
+    .success {
+      color: lightgreen;
+      text-align: center;
+      margin-top: 15px;
+    }
+
+    .error {
+      color: salmon;
+      text-align: center;
+      margin-top: 15px;
+    }
+  </style>
+</head>
+<body>
+  <div class="form-container">
+    <h1>Add Team</h1>
+
+    <form id="teamForm">
+      <label for="name">Team Name:</label>
+      <input type="text" id="name" required />
+
+      <label for="shortName">Short Name:</label>
+      <input type="text" id="shortName" />
+
+      <label for="logoUrl">Logo URL:</label>
+      <input type="url" id="logoUrl" />
+
+      <label for="foundedYear">Founded Year:</label>
+      <input type="text" id="foundedYear" />
+
+      <label for="stadiumName">Stadium Name:</label>
+      <input type="text" id="stadiumName" />
+
+      <label for="isNationalTeam">Is National Team:</label>
+      <select id="isNationalTeam">
+        <option value="false">No</option>
+        <option value="true">Yes</option>
+      </select>
+
+      <label for="leagueId">League:</label>
+      <select id="leagueId" required>
+        <option value="">Loading leagues...</option>
+      </select>
+
+      <label for="countryId">Country:</label>
+      <select id="countryId" required>
+        <option value="">Loading countries...</option>
+      </select>
+
+      <button type="submit">Add Team</button>
+    </form>
+
+    <div id="responseMsg" class="success"></div>
+    <div id="errorMsg" class="error"></div>
+  </div>
+
+  <script>
+    async function fetchOptions(endpoint, selectId, label) {
+      try {
+        const res = await fetch(endpoint);
+        const data = await res.json();
+        const select = document.getElementById(selectId);
+        select.innerHTML = `<option value="">Select ${label}</option>`;
+
+        data.sort((a, b) => a.name.localeCompare(b.name));
+        data.forEach((item) => {
+          const option = document.createElement("option");
+          option.value = item.id;
+          option.textContent = item.name;
+          select.appendChild(option);
+        });
+      } catch (err) {
+        document.getElementById(selectId).innerHTML = `<option value="">Failed to load ${label}</option>`;
+        console.error(`Error loading ${label}:`, err);
+      }
+    }
+
+    async function initForm() {
+      await fetchOptions("/api/leagues", "leagueId", "league");
+      await fetchOptions("/api/countries/", "countryId", "country");
+    }
+
+    document.getElementById("teamForm").addEventListener("submit", async function (event) {
+      event.preventDefault();
+
+      const teamData = {
+        name: document.getElementById("name").value,
+        shortName: document.getElementById("shortName").value,
+        logoUrl: document.getElementById("logoUrl").value,
+        foundedYear: document.getElementById("foundedYear").value,
+        stadiumName: document.getElementById("stadiumName").value,
+        isNationalTeam: document.getElementById("isNationalTeam").value === "true",
+        leagueId: parseInt(document.getElementById("leagueId").value),
+        countryId: parseInt(document.getElementById("countryId").value),
+      };
+
+      try {
+        const response = await fetch("/api/teams/save", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(teamData),
+        });
+
+        if (!response.ok) throw new Error("Failed to save team");
+
+        const result = await response.json();
+        document.getElementById("responseMsg").textContent = "✅ Team added successfully!";
+        document.getElementById("errorMsg").textContent = "";
+        document.getElementById("teamForm").reset();
+      } catch (err) {
+        document.getElementById("errorMsg").textContent = "❌ Error saving team.";
+        document.getElementById("responseMsg").textContent = "";
+        console.error(err);
+      }
+    });
+
+    initForm();
+  </script>
+</body>
+</html>

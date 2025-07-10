@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Player Profile</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #130026;
+      color: white;
+      margin: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: 40px 20px;
+    }
+
+    .player-card {
+      background: #2c204c;
+      padding: 40px;
+      border-radius: 16px;
+      max-width: 500px;
+      width: 100%;
+      text-align: center;
+      box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+    }
+
+    .player-card h1 {
+      font-size: 2rem;
+      margin-bottom: 20px;
+    }
+
+    .player-card img {
+      width: 140px;
+      height: 140px;
+      object-fit: cover;
+      border-radius: 10px;
+      margin-bottom: 20px;
+      border: 2px solid #fff;
+    }
+
+    .player-info {
+      font-size: 1.1rem;
+      text-align: left;
+      line-height: 2;
+    }
+
+    .player-info strong {
+      color: #ddd;
+    }
+
+    .player-info a {
+      color: #4da6ff;
+      text-decoration: none;
+    }
+
+    .player-info a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <div class="player-card" id="player-profile">
+    <!-- JS fills this -->
+  </div>
+
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const playerId = params.get('id');
+
+    async function loadPlayer() {
+      try {
+        const res = await fetch(`/api/players/${playerId}`);
+        if (!res.ok) throw new Error("Failed to load player data");
+        const player = await res.json();
+
+        document.getElementById("player-profile").innerHTML = `
+          <h1>${player.fullName}</h1>
+          <img src="${player.imageUrl || 'https://via.placeholder.com/140x140'}" alt="${player.fullName}" />
+          <div class="player-info">
+            <p><strong>Position:</strong> ${player.position}</p>
+            <p><strong>Nationality:</strong> ${player.country.nationality}</p>
+            <p><strong>Jersey Number:</strong> ${player.jerseyNumber}</p>
+            <p><strong>Date of Birth:</strong> ${player.dateOfBirth}</p>
+            <p><strong>Height:</strong> ${player.height} cm</p>
+            <p><strong>Weight:</strong> ${player.weight} kg</p>
+            <p><strong>Team:</strong> <a href="team.html?id=${player.teamId}">${player.teamName}</a></p>
+          </div>
+        `;
+      } catch (err) {
+        document.getElementById("player-profile").innerHTML = "<p>⚠️ Player not found.</p>";
+        console.error(err);
+      }
+    }
+
+    if (playerId) loadPlayer();
+  </script>
+</body>
+</html>

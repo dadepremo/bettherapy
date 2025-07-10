@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Team Details</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        background: #181028;
+        color: white;
+        margin: 0;
+        display: flex;
+        justify-content: center;
+        align-items: flex-start;
+        min-height: 100vh;
+        padding: 40px 20px;
+      }
+
+      .team-container {
+        background: #2c204c;
+        padding: 30px;
+        border-radius: 12px;
+        max-width: 800px;
+        width: 100%;
+        box-shadow: 0 0 20px rgba(0, 0, 0, 0.4);
+      }
+
+      .team-container img {
+        width: 100px;
+        height: auto;
+        display: block;
+        margin: 0 auto 20px;
+      }
+
+      h1,
+      h2 {
+        text-align: center;
+      }
+
+      .players-list,
+      .tab-panel {
+        margin-top: 30px;
+      }
+
+      .player-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+
+      .tabs {
+        text-align: center;
+        margin-top: 30px;
+      }
+
+      .tabs button {
+        background-color: #412568;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        margin: 0 5px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-weight: bold;
+      }
+
+      .tabs button:hover {
+        background-color: #5c3b8d;
+      }
+
+      .tab-panel {
+        display: none;
+      }
+
+      .tab-panel.active {
+        display: block;
+      }
+
+      .match-list {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        margin-top: 20px;
+      }
+
+      .match-item {
+        background-color: #3b2a5e;
+        padding: 12px 16px;
+        border-radius: 8px;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+        transition: background-color 0.3s;
+      }
+
+      .match-item:hover {
+        background-color: #4e367b;
+        cursor: pointer;
+      }
+
+      .match-date {
+        font-size: 0.9rem;
+        color: #ccc;
+        margin-top: 4px;
+      }
+
+      .match-opponent {
+        font-weight: bold;
+        font-size: 1.05rem;
+        color: #fff;
+      }
+
+      .player-item a {
+        color: #9fe7ff; /* Azzurro chiaro, leggibile sullo sfondo scuro */
+        text-decoration: none;
+        font-weight: bold;
+        transition: color 0.3s, text-shadow 0.3s;
+      }
+
+      .player-item a:hover {
+        color: #ffffff;
+        text-shadow: 0 0 5px rgba(255, 255, 255, 0.6);
+      }
+
+      .player-item a::after {
+        content: "";
+        display: block;
+        height: 2px;
+        width: 0;
+        background: #ffffff;
+        transition: width 0.3s;
+      }
+
+      .player-item a:hover::after {
+        width: 100%;
+      }
+      #team-info a {
+        color: #9fe7ff; /* Colore link coerente */
+        text-decoration: none;
+        font-weight: 600;
+        transition: color 0.3s ease;
+      }
+
+      #team-info a:hover {
+        color: #ffffff;
+        text-shadow: 0 0 6px rgba(255, 255, 255, 0.6);
+      }
+
+      #team-info a::after {
+        content: "";
+        display: block;
+        height: 2px;
+        width: 0;
+        background: #ffffff;
+        transition: width 0.3s;
+      }
+
+      #team-info a:hover::after {
+        width: 100%;
+      }
+      #team-info {
+        margin-bottom: 30px;
+        text-align: left;
+        line-height: 1.8;
+      }
+
+      #team-info p {
+        margin: 6px 0;
+        font-size: 1rem;
+      }
+
+      #team-info strong {
+        color: #ffffff;
+        display: inline-block;
+        min-width: 100px;
+      }
+
+      #team-info a {
+        color: #66d9ef;
+        text-decoration: none;
+        font-weight: 600;
+        transition: color 0.3s ease;
+      }
+
+      #team-info a:hover {
+        color: #ffffff;
+        text-shadow: 0 0 6px rgba(255, 255, 255, 0.5);
+      }
+      .player-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="team-container" id="team-container">
+      <div id="team-info"></div>
+
+      <div class="tabs">
+        <button onclick="showTab('players')">Players</button>
+        <button onclick="showTab('fixtures')">Fixtures</button>
+        <button onclick="showTab('results')">Results</button>
+        <button onclick="showTab('statistics')">Statistics</button>
+      </div>
+
+      <div id="tab-players" class="tab-panel active"></div>
+      <div id="tab-fixtures" class="tab-panel"></div>
+      <div id="tab-results" class="tab-panel"></div>
+      <div id="tab-statistics" class="tab-panel"></div>
+    </div>
+
+    <script>
+      const urlParams = new URLSearchParams(window.location.search);
+      const teamId = urlParams.get("id");
+
+      function showTab(id) {
+        document.querySelectorAll(".tab-panel").forEach((el) => {
+          el.classList.toggle("active", el.id === `tab-${id}`);
+        });
+      }
+
+      async function loadTeamAndPlayers() {
+        try {
+          const [teamRes, playersRes] = await Promise.all([
+            fetch(`/api/teams/${teamId}`),
+            fetch(`/api/players/byTeam/${teamId}`),
+          ]);
+          if (!teamRes.ok || !playersRes.ok) throw new Error("API error");
+
+          const team = await teamRes.json();
+          const players = await playersRes.json();
+
+          document.getElementById("team-info").innerHTML = `
+        <h1>${team.name}</h1>
+        <img src="${team.logoUrl}" alt="${team.name} logo" />
+        <p><strong>Short Name:</strong> ${team.shortName}</p>
+        <p><strong>Country:</strong> ${team.country.name}</p>
+        <p><strong>Founded:</strong> ${team.foundedYear}</p>
+        <p><strong>Stadium:</strong> ${team.stadiumName}</p>
+        <p><strong>League:</strong><a href="league.html?id=${team.leagueId}"> ${team.leagueName}</a></p>
+      `;
+
+          const grouped = players.reduce((acc, player) => {
+            (acc[player.position] = acc[player.position] || []).push(player);
+            return acc;
+          }, {});
+
+          document.getElementById("tab-players").innerHTML = `
+        <h2>Players</h2>
+        ${["Goalkeeper", "Defender", "Midfielder", "Forward"]
+          .map((role) => {
+            const group = grouped[role] || [];
+            if (!group.length) return "";
+            return `
+  <h3>${role}s</h3>
+  ${group
+    .map(
+      (p) => `
+        <div class="player-item" style="margin-bottom: 6px;">
+          <strong>
+            <a href="player.html?id=${p.id}">#${p.jerseyNumber} ${p.fullName}</a>
+          </strong>
+          <span style="display: inline-flex; align-items: center; gap: 6px; margin-left: 12px;">
+            <span>${p.country.nationality}</span>
+            <img src="${p.country.url}" alt="${p.country.nationality} flag" style="width: 20px; height: 14px;"/>
+          </span>
+        </div>
+      `
+    )
+    .join("")}
+`;
+
+
+          })
+          .join("")}
+      `;
+        } catch (e) {
+          document.getElementById("team-container").innerHTML =
+            "<p>Error loading data</p>";
+          console.error(e);
+        }
+      }
+
+      async function loadFixturesAndResults() {
+        try {
+          const res = await fetch(`/api/matches/byTeam/${teamId}`);
+          const matches = await res.json();
+
+          const now = new Date();
+          const past = matches.filter((m) => m.status === "COMPLETED");
+          const upcoming = matches.filter((m) => m.status === "SCHEDULED");
+
+          // Fixtures
+          document.getElementById("tab-fixtures").innerHTML = `
+        <h2>Upcoming Fixtures</h2>
+        ${
+          upcoming.length
+            ? `<div class="match-list">` +
+              upcoming
+                .map((m) => {
+                  const isHome = m.homeTeamId == teamId;
+                  const opponent = isHome ? m.awayTeamName : m.homeTeamName;
+                  const location = isHome ? "vs" : "@";
+                  const date = new Date(m.kickoff);
+                  return `<a href="/match.html?id=${m.id}" style="underline: none;">
+                    <div class="match-item">
+                      <div class="match-opponent">${location} ${opponent}</div>
+                      <div class="match-date">${date.toLocaleDateString()} at ${date.toLocaleTimeString(
+                    [],
+                    { hour: "2-digit", minute: "2-digit" }
+                  )}</div>
+                    </div></a>
+                  `;
+                })
+                .join("") +
+              "</div>"
+            : "<p>No upcoming fixtures</p>"
+        }
+      `;
+
+          // Results
+          document.getElementById("tab-results").innerHTML = `
+        <h2>Recent Results</h2>
+        ${
+          past.length
+            ? `<div class="match-list">` +
+              past
+                .map((m) => {
+                  const isHome = m.homeTeamId == teamId;
+                  const opponent = isHome ? m.awayTeamName : m.homeTeamName;
+                  const location = isHome ? "vs" : "@";
+                  const goalsFor = isHome ? m.homeScore : m.awayScore;
+                  const goalsAgainst = isHome ? m.awayScore : m.homeScore;
+                  const date = new Date(m.kickoff);
+                  return `
+                    <div class="match-item">
+                      <div class="match-opponent">${location} ${opponent} – ${goalsFor} : ${goalsAgainst}</div>
+                      <div class="match-date">${date.toLocaleDateString()}</div>
+                    </div>
+                  `;
+                })
+                .join("") +
+              "</div>"
+            : "<p>No past results</p>"
+        }
+      `;
+
+          // Statistics
+          let wins = 0,
+            draws = 0,
+            losses = 0,
+            scored = 0,
+            conceded = 0;
+
+          past.forEach((m) => {
+            const isHome = m.homeTeamId == teamId;
+            const gf = isHome ? m.homeScore : m.awayScore;
+            const ga = isHome ? m.awayScore : m.homeScore;
+
+            scored += gf;
+            conceded += ga;
+
+            if (gf > ga) wins++;
+            else if (gf === ga) draws++;
+            else losses++;
+          });
+
+          document.getElementById("tab-statistics").innerHTML = `
+        <h2>Statistics</h2>
+        <p><strong>Matches:</strong> ${past.length}</p>
+        <p><strong>Wins:</strong> ${wins}</p>
+        <p><strong>Draws:</strong> ${draws}</p>
+        <p><strong>Losses:</strong> ${losses}</p>
+        <p><strong>Goals Scored:</strong> ${scored}</p>
+        <p><strong>Goals Conceded:</strong> ${conceded}</p>
+      `;
+        } catch (e) {
+          console.error("Match data error", e);
+        }
+      }
+
+      if (teamId) {
+        loadTeamAndPlayers();
+        loadFixturesAndResults();
+      } else {
+        document.getElementById("team-container").innerHTML =
+          "<p>No team ID provided</p>";
+      }
+    </script>
+  </body>
+</html>

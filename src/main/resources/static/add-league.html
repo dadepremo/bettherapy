@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Create League</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        background: #181028;
+        color: white;
+        display: flex;
+        justify-content: center;
+        align-items: flex-start;
+        padding: 40px 20px;
+        min-height: 100vh;
+      }
+
+      .form-container {
+        background: #2c204c;
+        padding: 30px;
+        border-radius: 12px;
+        max-width: 600px;
+        width: 100%;
+        box-shadow: 0 0 20px rgba(0, 0, 0, 0.4);
+      }
+
+      .form-container h1 {
+        text-align: center;
+        margin-bottom: 20px;
+      }
+
+      label {
+        display: block;
+        margin-top: 15px;
+        margin-bottom: 5px;
+        font-weight: bold;
+      }
+
+      input,
+      select {
+        width: 100%;
+        padding: 8px;
+        border: none;
+        border-radius: 5px;
+        font-size: 1rem;
+      }
+
+      button {
+        margin-top: 20px;
+        width: 100%;
+        padding: 10px;
+        font-size: 1rem;
+        font-weight: bold;
+        background-color: #4caf50;
+        border: none;
+        border-radius: 6px;
+        color: white;
+        cursor: pointer;
+      }
+
+      .success {
+        color: lightgreen;
+        text-align: center;
+        margin-top: 15px;
+      }
+
+      .error {
+        color: salmon;
+        text-align: center;
+        margin-top: 15px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="form-container">
+      <h1>Create New League</h1>
+
+      <form id="leagueForm">
+        <label for="name">Name:</label>
+        <input type="text" id="name" required />
+
+        <label for="description">Description:</label>
+        <input type="text" id="description" />
+
+        <label for="season">Season:</label>
+        <input type="text" id="season" />
+
+        <label for="sport">Sport:</label>
+        <select id="sport" required>
+          <option value="">Loading sports...</option>
+        </select>
+
+        <label for="country">Country:</label>
+        <select id="country" required>
+          <option value="">Loading countries...</option>
+        </select>
+
+        <button type="submit">Save</button>
+      </form>
+
+      <div id="responseMsg" class="success"></div>
+      <div id="errorMsg" class="error"></div>
+    </div>
+
+    <script>
+      async function fetchOptions(endpoint, selectId, defaultLabel) {
+        try {
+          const response = await fetch(endpoint);
+          const data = await response.json();
+          const select = document.getElementById(selectId);
+          select.innerHTML = `<option value="">Select ${defaultLabel}</option>`;
+
+          if (!Array.isArray(data)) {
+            throw new Error(`Expected array, got: ${JSON.stringify(data)}`);
+          }
+
+          // Sort alphabetically by name
+          data.sort((a, b) => a.name.localeCompare(b.name));
+
+          data.forEach((item) => {
+            const option = document.createElement("option");
+            option.value = item.id;
+            option.text = item.name;
+            select.add(option);
+          });
+        } catch (err) {
+          document.getElementById(
+            selectId
+          ).innerHTML = `<option value="">Failed to load ${defaultLabel}</option>`;
+          console.error(`Error loading ${defaultLabel}:`, err);
+        }
+      }
+
+      window.onload = async () => {
+        await fetchOptions("/api/sports/", "sport", "sport");
+        await fetchOptions("/api/countries/", "country", "country");
+      };
+
+      document
+        .getElementById("leagueForm")
+        .addEventListener("submit", async function (event) {
+          event.preventDefault();
+
+          const leagueData = {
+            name: document.getElementById("name").value,
+            description: document.getElementById("description").value,
+            season: document.getElementById("season").value,
+            sportId: document.getElementById("sport").value,
+            countryId: document.getElementById("country").value,
+          };
+
+          try {
+            const response = await fetch("/api/leagues/save", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(leagueData),
+            });
+
+            if (!response.ok) throw new Error("Failed to save league");
+
+            const result = await response.json();
+            document.getElementById("responseMsg").textContent =
+              "✅ League saved successfully!";
+            document.getElementById("errorMsg").textContent = "";
+            document.getElementById("leagueForm").reset();
+          } catch (err) {
+            document.getElementById("errorMsg").textContent =
+              "❌ Error saving league.";
+            document.getElementById("responseMsg").textContent = "";
+            console.error(err);
+          }
+        });
+    </script>
+  </body>
+</html>

@@ -1,0 +1,841 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Match View</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"
+    />
+    <style>
+      body {
+        margin: 0;
+        font-family: "Segoe UI", sans-serif;
+        background-color: #0e0020;
+        color: white;
+        display: flex;
+        flex-direction: column;
+        min-height: 100vh;
+      }
+
+      .container {
+        max-width: 960px;
+        margin: auto;
+        padding: 2rem 1rem;
+        text-align: center;
+      }
+
+      .match-header h2 {
+        font-size: 2.4rem;
+        font-weight: 700;
+        margin-bottom: 3rem;
+      }
+
+      .teams {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 4rem;
+        margin-bottom: 2rem;
+      }
+
+      .team {
+        flex: 1;
+        text-align: center;
+        min-width: 100px;
+      }
+
+      .team img {
+        width: 90px;
+        height: 90px;
+        object-fit: contain;
+        background-color: #ffffff;
+        border-radius: 50%;
+        padding: 6px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.4);
+        transition: transform 0.3s;
+      }
+
+      .team img:hover {
+        transform: scale(1.05);
+      }
+
+      .team h3 {
+        font-size: 1.2rem;
+        margin-top: 0.75rem;
+        font-weight: 600;
+        color: #e0e0e0;
+      }
+
+      .vs {
+        flex-shrink: 0;
+        width: 160px;
+        text-align: center;
+        font-size: 2rem;
+        font-weight: bold;
+        color: #ffffff;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .vs .score {
+        font-size: 2.2rem;
+        font-weight: 800;
+        margin-bottom: 0.5rem;
+      }
+
+      .vs .kickoff {
+        font-size: 0.95rem;
+        margin-bottom: 0.3rem;
+      }
+
+      .vs .live {
+        margin-top: 0.3rem;
+      }
+
+      .info {
+        font-size: 1rem;
+        color: #bdbdbd;
+        margin-top: 2.5rem;
+        margin-bottom: 1rem;
+      }
+
+      .button-group {
+        display: flex;
+        justify-content: center;
+        gap: 1.2rem;
+        margin-top: 2rem;
+        flex-wrap: wrap;
+      }
+
+      .button-group button {
+        padding: 0.7rem 1.5rem;
+        border: 2px solid #4a90e2;
+        background-color: #4a90e2;
+        color: white;
+        font-weight: bold;
+        font-size: 0.95rem;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: background 0.2s, transform 0.2s;
+      }
+
+      .button-group button:hover {
+        background-color: #357acc;
+        transform: translateY(-2px);
+      }
+
+      .meta-info {
+        margin-top: 2rem;
+        font-size: 0.9rem;
+        color: #ccc;
+      }
+
+      .form-dots {
+        margin-top: 0.5rem;
+      }
+
+      .dot {
+        display: inline-block;
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        margin: 0 2px;
+      }
+
+      .win {
+        background: #4caf50;
+      }
+
+      .draw {
+        background: #ffc107;
+      }
+
+      .loss {
+        background: #f44336;
+      }
+
+      #countdown {
+        color: #67a7ff;
+        font-weight: bold;
+        margin-top: 1rem;
+      }
+
+      .match-stats-card {
+        background-color: #1b1030;
+        padding: 1.5rem;
+        border-radius: 12px;
+        margin-bottom: 2.5rem;
+        box-shadow: 0 0 12px rgba(0, 0, 0, 0.3);
+      }
+
+      .match-stats-card h3 {
+        margin-bottom: 1rem;
+        color: #ffffff;
+        font-size: 1.2rem;
+      }
+
+      .stat-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+        gap: 0.75rem;
+        color: #e0e0e0;
+        font-size: 0.95rem;
+      }
+
+      .players-section {
+        margin-top: 3rem;
+      }
+
+      .players-teams {
+        display: flex;
+        justify-content: space-between;
+        gap: 2rem;
+        flex-wrap: nowrap;
+      }
+
+      .players-column {
+        flex: 0 1 45%;
+        background-color: #1f1436;
+        padding: 1.5rem 2rem;
+        border-radius: 14px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.35);
+        min-width: 400px;
+      }
+
+      .players-column h4 {
+        font-size: 1.3rem;
+        margin-bottom: 1.5rem;
+        color: #4fc3f7;
+        text-align: center;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+
+      .player-group {
+        margin-bottom: 1.2rem;
+        text-align: left;
+      }
+
+      .player-group h5 {
+        font-size: 1.1rem;
+        color: #81d4fa;
+        margin-bottom: 0.4rem;
+        border-bottom: 1px solid #444;
+        padding-bottom: 0.3rem;
+      }
+
+      .player-group li {
+        margin-bottom: 0.35rem;
+        font-size: 0.96rem;
+        line-height: 1.4;
+        color: #e0e0e0;
+      }
+
+      .player-group li:hover {
+        color: #ffffff;
+        background-color: #2a1e42;
+        padding: 2px 6px;
+        border-radius: 4px;
+        transition: 0.2s ease-in-out;
+      }
+
+      .player-group li a {
+        color: #66d9ef;
+        text-decoration: none;
+        font-weight: 600;
+        transition: color 0.2s, text-shadow 0.2s;
+      }
+
+      .player-group li a:hover {
+        color: #ffffff;
+        text-shadow: 0 0 6px rgba(255, 255, 255, 0.4);
+      }
+
+      @media (max-width: 768px) {
+        .players-column {
+          flex: 1 1 100%;
+        }
+      }
+
+      @media (max-width: 600px) {
+        .teams {
+          flex-direction: column;
+        }
+
+        .button-group {
+          flex-direction: column;
+        }
+
+        .team img {
+          width: 70px;
+          height: 70px;
+        }
+      }
+
+      .layout {
+        display: flex;
+        flex-direction: row;
+        align-items: flex-start;
+        justify-content: center;
+        gap: 2rem;
+        padding: 2rem;
+      }
+
+      .betting-panel {
+        background-color: #1b1030;
+        border-radius: 10px;
+        padding: 1.5rem;
+        max-width: 300px;
+        width: 100%;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.4);
+        color: white;
+        margin-right: 200px;
+      }
+
+      .betting-panel h3 {
+        font-size: 1.2rem;
+        margin-bottom: 1rem;
+        text-align: center;
+        color: #4fc3f7;
+      }
+
+      .betting-panel label {
+        display: block;
+        margin-bottom: 1rem;
+        cursor: pointer;
+      }
+
+      .betting-panel input[type="radio"] {
+        margin-right: 8px;
+      }
+
+      #bet-form {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        margin-top: 1rem;
+      }
+
+      #betAmount {
+        padding: 0.5rem;
+        border: none;
+        border-radius: 6px;
+        background: #2c204a;
+        color: white;
+      }
+
+      #betAmount::placeholder {
+        color: #bbb;
+      }
+
+      #bet-form button {
+        background-color: #4a90e2;
+        color: white;
+        padding: 0.6rem;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        font-weight: bold;
+      }
+
+      #bet-form button:hover {
+        background-color: #357acc;
+      }
+
+      .layout {
+        position: relative;
+        display: flex;
+        justify-content: center;
+      }
+
+      .container {
+        max-width: 960px;
+        width: 100%;
+      }
+
+      .betting-panel {
+        position: absolute;
+        right: 0;
+        top: 2rem;
+        width: 260px;
+        background-color: #1b1030;
+        border-radius: 10px;
+        padding: 1.5rem;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.4);
+        color: white;
+      }
+
+      @media (max-width: 1024px) {
+        .betting-panel {
+          position: static;
+          width: 100%;
+          margin-top: 2rem;
+        }
+
+        .layout {
+          flex-direction: column;
+          align-items: center;
+        }
+      }
+
+      .receipt-popup {
+        position: fixed;
+        right: 1.5rem;
+        bottom: 1.5rem;
+        width: 280px;
+        background: #fff;
+        color: #000;
+        font-family: "Courier New", Courier, monospace;
+        border: 2px dashed #222;
+        padding: 1rem;
+        border-radius: 8px;
+        box-shadow: 0 0 12px rgba(0, 0, 0, 0.5);
+        z-index: 1000;
+        display: none;
+        animation: slideIn 0.3s ease-out;
+      }
+
+      .receipt-popup.active {
+        display: block;
+      }
+
+      .receipt-popup h3 {
+        margin: 0 0 0.5rem;
+        text-align: center;
+        font-size: 1rem;
+        border-bottom: 1px dotted #333;
+        padding-bottom: 0.5rem;
+      }
+
+      .receipt-popup .bet-line {
+        display: flex;
+        justify-content: space-between;
+        margin: 0.25rem 0;
+      }
+
+      .receipt-popup .dotted {
+        border-top: 1px dotted #222;
+        margin: 0.5rem 0;
+      }
+
+      .receipt-popup .total {
+        font-weight: bold;
+        display: flex;
+        justify-content: space-between;
+      }
+
+      .receipt-popup .footer {
+        text-align: center;
+        font-size: 0.75rem;
+        margin-top: 1rem;
+        border-top: 1px dotted #333;
+        padding-top: 0.5rem;
+        color: #444;
+      }
+
+      @keyframes slideIn {
+        from {
+          transform: translateY(20px);
+          opacity: 0;
+        }
+        to {
+          transform: translateY(0);
+          opacity: 1;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Receipt Popup -->
+    <div class="receipt-popup" id="receiptPopup">
+      <h3>Bet Receipt</h3>
+      <div class="bet-line">
+        <span id="receiptDesc"></span><span id="receiptOdds"></span>
+      </div>
+      <div class="dotted"></div>
+      <div class="bet-line">
+        <span>Stake</span><span id="receiptStake"></span>
+      </div>
+      <div class="total">
+        <span>Potential</span><span id="receiptPayout"></span>
+      </div>
+      <div class="footer">
+        BetTherapy<br />
+        Thank you for betting!
+      </div>
+      <!-- ✅ Close Button -->
+      <button
+        onclick="closeReceipt()"
+        style="
+          margin-top: 1rem;
+          width: 100%;
+          padding: 0.4rem;
+          background: #ff5470;
+          color: white;
+          border: none;
+          border-radius: 4px;
+          cursor: pointer;
+        "
+      >
+        ✖ Close
+      </button>
+    </div>
+
+    <div class="layout">
+      <div class="container animate__animated animate__fadeInUp">
+        <div class="match-header"><h2>Match Preview</h2></div>
+        <div class="teams">
+          <div class="team">
+            <img id="homeLogo" src="" />
+            <h3 id="homeName">Home</h3>
+            <div class="form-dots" id="homeForm"></div>
+          </div>
+          <div class="vs">
+            <div id="matchScore" class="score">0 - 0</div>
+            <p id="kickoffTime" class="kickoff">Kickoff: --</p>
+            <p id="countdown" class="live" style="font-size: 20px"></p>
+          </div>
+          <div class="team">
+            <img id="awayLogo" src="" />
+            <h3 id="awayName">Away</h3>
+            <div class="form-dots" id="awayForm"></div>
+          </div>
+        </div>
+
+        <div class="info">
+          <p id="venue">Venue: TBD</p>
+          <div class="meta-info">
+            <p><strong>Top Scorers:</strong> <span id="topScorers">–</span></p>
+            <p>
+              <strong>Table Position:</strong> <span id="tablePosition">–</span>
+            </p>
+          </div>
+        </div>
+
+        <div class="match-stats-card">
+          <h3>Match Statistics</h3>
+          <div class="stat-grid">
+            <div><strong>Possession:</strong> 52% - 48%</div>
+            <div><strong>Shots:</strong> 13 - 9</div>
+            <div><strong>On Target:</strong> 6 - 4</div>
+            <div><strong>Pass Accuracy:</strong> 88% - 84%</div>
+            <div><strong>Fouls:</strong> 11 - 9</div>
+          </div>
+        </div>
+
+        <div class="players-section">
+          <h3>Players</h3>
+          <div class="players-teams">
+            <div class="players-column">
+              <h4 id="homeTeamLabel">Home Team</h4>
+              <div id="homePlayers"></div>
+            </div>
+            <div class="players-column">
+              <h4 id="awayTeamLabel">Away Team</h4>
+              <div id="awayPlayers"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="button-group">
+          <button onclick="alert('Lineups not implemented yet')">
+            View Lineups
+          </button>
+          <button id="leagueBtn" onclick="goLeague()">League</button>
+          <button
+            onclick="window.location.href = '/match-editor.html?id=' + match.id"
+          >
+            Edit Match
+          </button>
+        </div>
+      </div>
+      <aside class="betting-panel">
+        <h3>Place a Bet</h3>
+        <div id="bet-options"></div>
+        <div id="bet-form">
+          <input type="number" id="betAmount" placeholder="Enter stake" />
+          <button onclick="placeBet()">Place Bet</button>
+        </div>
+      </aside>
+    </div>
+
+    <script>
+      function toggleReceipt() {
+        document.getElementById("receiptPopup").classList.toggle("active");
+      }
+      function closeReceipt() {
+        document.getElementById("receiptPopup").classList.remove("active");
+      }
+    </script>
+
+    <script>
+      let match;
+
+      async function loadMatch() {
+        const params = new URLSearchParams(window.location.search);
+        const matchId = params.get("id");
+
+        if (!matchId) {
+          document.body.innerHTML =
+            "<p style='text-align:center;'>❌ Match ID not found.</p>";
+          return;
+        }
+
+        try {
+          const res = await fetch(
+            `http://localhost:8080/api/matches/${matchId}`
+          );
+          if (!res.ok) throw new Error("Match not found");
+          match = await res.json();
+
+          document.getElementById("homeLogo").src = match.homeTeamLogo;
+          document.getElementById("awayLogo").src = match.awayTeamLogo;
+          document.getElementById("homeName").textContent = match.homeTeamName;
+          document.getElementById("awayName").textContent = match.awayTeamName;
+          document.getElementById("homeTeamLabel").textContent =
+            match.homeTeamName;
+          document.getElementById("awayTeamLabel").textContent =
+            match.awayTeamName;
+
+          renderFormDots(match.homeTeamId, "homeForm");
+          renderFormDots(match.awayTeamId, "awayForm");
+
+          const kickoff = new Date(match.kickoff);
+          document.getElementById(
+            "kickoffTime"
+          ).textContent = `Kickoff: ${kickoff.toLocaleDateString(
+            "en-GB"
+          )} ${kickoff.toLocaleTimeString([], {
+            hour: "2-digit",
+            minute: "2-digit",
+          })}`;
+          document.getElementById("venue").textContent = `Venue: ${
+            match.venue || "TBD"
+          }`;
+
+          const matchScore = document.getElementById("matchScore");
+          if (match.homeScore != null && match.awayScore != null) {
+            matchScore.textContent = `${match.homeScore} - ${match.awayScore}`;
+          }
+
+          if (match.status === "SCHEDULED") {
+            const countdown = document.getElementById("countdown");
+            const timer = setInterval(() => {
+              const now = new Date();
+              const diff = kickoff - now;
+              const hours = Math.floor(diff / 1000 / 60 / 60);
+              const mins = Math.floor((diff / 1000 / 60) % 60);
+              countdown.textContent = `⏳ Starts in ${hours}h ${mins}m`;
+            }, 60000);
+          }
+
+          if (match.status === "ONGOING") {
+            document.getElementById("countdown").textContent = "⚽ Live Now!";
+          }
+
+          const [homePlayersRes, awayPlayersRes] = await Promise.all([
+            fetch(`/api/players/byTeam/${match.homeTeamId}`),
+            fetch(`/api/players/byTeam/${match.awayTeamId}`),
+          ]);
+
+          const homePlayers = await homePlayersRes.json();
+          const awayPlayers = await awayPlayersRes.json();
+
+          renderGroupedPlayers(homePlayers, "homePlayers");
+          renderGroupedPlayers(awayPlayers, "awayPlayers");
+        } catch (err) {
+          console.error(err);
+          document.body.innerHTML =
+            "<p style='text-align:center;'>❌ Failed to load match details.</p>";
+        }
+      }
+
+      loadMatch();
+
+      function groupByPosition(players) {
+        return players.reduce((acc, player) => {
+          if (!acc[player.position]) acc[player.position] = [];
+          acc[player.position].push(player);
+          return acc;
+        }, {});
+      }
+
+      function renderGroupedPlayers(players, containerId) {
+        const container = document.getElementById(containerId);
+        const grouped = groupByPosition(players);
+
+        container.innerHTML = [
+          "Goalkeeper",
+          "Defender",
+          "Midfielder",
+          "Forward",
+        ]
+          .map((position) => {
+            const group = grouped[position] || [];
+            if (!group.length) return "";
+            return `
+              <div class="player-group">
+                <h5>${position}s</h5>
+                <ul>
+                  ${group
+                    .map(
+                      (p) => `
+                    <li>
+                      <a href="player.html?id=${p.id}">#${p.jerseyNumber} ${
+                        p.fullName
+                      }</a>
+                      <span style="margin-left: 8px;">
+                        ${p.country?.nationality || ""}
+                        ${
+                          p.country?.url
+                            ? `<img src="${p.country.url}" alt="${p.country.nationality}" style="width: 18px; height: 12px; vertical-align: middle; margin-left: 4px;" />`
+                            : ""
+                        }
+                      </span>
+                    </li>`
+                    )
+                    .join("")}
+                </ul>
+              </div>
+            `;
+          })
+          .join("");
+      }
+
+      function getResult(match, teamId) {
+        const isHome = match.homeTeam.id === teamId;
+        const teamScore = isHome ? match.homeScore : match.awayScore;
+        const oppScore = isHome ? match.awayScore : match.homeScore;
+        if (teamScore > oppScore) return "win";
+        if (teamScore < oppScore) return "loss";
+        return "draw";
+      }
+
+      function renderFormDots(teamId, containerId) {
+        fetch(`http://localhost:8080/api/matches/recent/${teamId}`)
+          .then((res) => res.json())
+          .then((recentMatches) => {
+            const container = document.getElementById(containerId);
+            if (!container) return;
+            container.innerHTML = "";
+            recentMatches.forEach((m) => {
+              const result = getResult(m, teamId);
+              if (!result) return;
+              const dot = document.createElement("span");
+              dot.classList.add("dot", result);
+              container.appendChild(dot);
+            });
+          })
+          .catch((err) => console.error("Form load error", err));
+      }
+
+      async function goLeague() {
+        const matchId = new URLSearchParams(window.location.search).get("id");
+        if (!matchId) {
+          alert("Match ID missing");
+          return;
+        }
+
+        try {
+          const res = await fetch(`/api/matches/${matchId}`);
+          if (!res.ok) throw new Error("Match fetch failed");
+
+          const match = await res.json();
+          if (match.leagueId) {
+            window.location.href = `/league.html?id=${match.leagueId}`;
+          } else {
+            alert("League not found for this match");
+          }
+        } catch (err) {
+          console.error(err);
+          alert("Failed to load match info");
+        }
+      }
+    </script>
+
+    <script>
+      const matchId = new URLSearchParams(location.search).get("id");
+
+      async function loadBetOptions() {
+        const res = await fetch(`/api/bet-options/match/${matchId}`);
+        const options = await res.json();
+
+        const container = document.getElementById("bet-options");
+        options.forEach((option) => {
+          const div = document.createElement("div");
+          div.innerHTML = `
+      <label>
+        <input type="radio" name="betOption" value="${option.id}">
+        ${option.description} (Odds: ${option.odds})
+      </label>
+    `;
+          container.appendChild(div);
+        });
+      }
+      loadBetOptions();
+
+      async function placeBet() {
+        const betOptionRadio = document.querySelector(
+          'input[name="betOption"]:checked'
+        );
+        const betOptionId = betOptionRadio?.value;
+        const amount = parseFloat(document.getElementById("betAmount").value);
+        const userId = JSON.parse(localStorage.getItem("user"))?.id || 1;
+
+        if (!betOptionId || isNaN(amount) || amount <= 0) {
+          alert("Please select a bet option and enter a valid amount.");
+          return;
+        }
+
+        const oddsText =
+          betOptionRadio.parentElement?.textContent.match(
+            /Odds:\s*([\d.]+)/
+          )?.[1] || "1.00";
+        const betDescription = betOptionRadio.parentElement?.textContent
+          .split(" (Odds")[0]
+          .trim();
+
+        const payload = {
+          userId: userId,
+          betOptionId: parseInt(betOptionId),
+          matchId: parseInt(matchId),
+          stake: amount,
+          odds: parseFloat(oddsText),
+        };
+
+        try {
+          const res = await fetch("/api/bets/place", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+          });
+
+          if (!res.ok) throw new Error("Failed to place bet");
+
+          const result = await res.json();
+
+          // Update receipt
+          document.getElementById("receiptDesc").textContent = betDescription;
+          document.getElementById("receiptOdds").textContent =
+            result.odds.toFixed(2);
+          document.getElementById(
+            "receiptStake"
+          ).textContent = `€${result.stake.toFixed(2)}`;
+          document.getElementById(
+            "receiptPayout"
+          ).textContent = `€${result.potentialPayout.toFixed(2)}`;
+
+          // Show receipt and toggle button
+          document.getElementById("receiptPopup").classList.add("active");
+        } catch (err) {
+          console.error("Bet error:", err);
+          alert("❌ Failed to place bet.");
+        }
+      }
+    </script>
+  </body>
+</html>
