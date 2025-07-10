@@ -36,7 +36,7 @@ public class PlayerImportService {
     private LoggableComponent logger;
 
     private static final String API_URL = "https://v3.football.api-sports.io/players?team={teamApiId}&season=2023";
-    private static final String API_KEY = "d2660d50fc2fbd5a0dabc831996688cd";
+    private static final String API_KEY = "";
 
     public void importPlayersForTeam(Long localTeamId, int externalTeamId) {
         Team team = teamRepository.findById(localTeamId)
